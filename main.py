@@ -18,6 +18,12 @@ class Post(BaseModel):
     author: Optional["Author"] = None
 
 
+my_posts: list[dict] = [
+    {"title": "title1", "content": "content1", "id": 1},
+    {"title": "title2", "content": "content2", "id": 2},
+]
+
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -25,10 +31,10 @@ async def root():
 
 @app.get("/posts")
 def get_posts():
-    return {"data": "This is your posts"}
+    return {"data": my_posts}
 
 
-@app.post("/createposts")
+@app.post("/posts")
 def create_posts(new_post: Post):
     print("new_post")
     print(new_post.dict())
