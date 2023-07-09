@@ -1,3 +1,4 @@
+from random import randrange
 from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -24,6 +25,13 @@ my_posts: list[dict] = [
 ]
 
 
+def find_post(id):
+    for post in my_posts:
+        if post["id"] == id:
+            return post
+    return None
+
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -35,7 +43,16 @@ def get_posts():
 
 
 @app.post("/posts")
-def create_posts(new_post: Post):
-    print("new_post")
-    print(new_post.dict())
-    return {"new_post": f"title: '{new_post.title}' content: '{new_post.content}'"}
+def create_posts(post: Post):
+    post_dict = post.model_dump()
+    post_dict["id"] = randrange(0, 1000000)
+    my_posts.append(post_dict)
+    return {"data": post_dict}
+
+
+@app.get("/posts/{id}")
+def get_post(id: int):
+    post = find_post(id)
+    if post:
+        return {"data": post}
+    return {"error": "Post not found"}
