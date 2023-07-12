@@ -1,6 +1,8 @@
 from random import randrange
 from typing import Optional
-from fastapi import FastAPI, Response, status, HTTPException
+
+from fastapi import FastAPI, HTTPException, Response, status
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -55,6 +57,18 @@ def get_post(id: int, response: Response):
     post = find_post(id)
     if post:
         return {"data": post}
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id: {id} was not found")
+
+
+@app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
+def update_put_post(id: int, post: PostPut):
+    post_dict = post.model_dump()
+    post_dict["id"] = id
+
+    for i, p in enumerate(my_posts):
+        if p["id"] == id:
+            my_posts[i] = post_dict
+            return {"data": post_dict}
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id: {id} was not found")
 
 
