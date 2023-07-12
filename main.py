@@ -21,6 +21,26 @@ class Post(BaseModel):
     author: Optional["Author"] = None
 
 
+class PostBase(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    published: Optional[bool] = None
+    rating: Optional[int] = None
+    author: Optional["Author"] = None
+
+
+class PostPatch(PostBase):
+    ...
+
+
+class PostPut(PostBase):
+    title: str
+    content: str
+
+    class Config:
+        json_schema_extra = {"example": {"title": "title1", "content": "content1", "published": True, "rating": 5, "author": {"name": "author1", "email": "author@gmail.com"}}}
+
+
 my_posts: list[dict] = [
     {"title": "title1", "content": "content1", "id": 1},
     {"title": "title2", "content": "content2", "id": 2},
@@ -70,6 +90,20 @@ def update_put_post(id: int, post: PostPut):
             my_posts[i] = post_dict
             return {"data": post_dict}
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id: {id} was not found")
+
+
+@app.patch("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
+def update_patch_post(id: int, post: PostPatch):
+    # Official FastAPi solution
+    stored_item_data = my_posts[id]
+    if stored_item_data is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id: {id} was not found")
+
+    stored_item_model = PostPatch(**stored_item_data)
+    update_data = post.model_dump(exclude_unset=True)
+    updated_item = stored_item_model.model_copy(update=update_data)
+    my_posts[id] = jsonable_encoder(updated_item)
+    return updated_item
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
