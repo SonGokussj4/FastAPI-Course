@@ -38,7 +38,15 @@ class PostPut(PostBase):
     content: str
 
     class Config:
-        json_schema_extra = {"example": {"title": "title1", "content": "content1", "published": True, "rating": 5, "author": {"name": "author1", "email": "author@gmail.com"}}}
+        json_schema_extra = {
+            "example": {
+                "title": "title1",
+                "content": "content1",
+                "published": True,
+                "rating": 5,
+                "author": {"name": "author1", "email": "author@gmail.com"},
+            }
+        }
 
 
 my_posts: list[dict] = [
