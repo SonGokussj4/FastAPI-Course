@@ -1,9 +1,13 @@
 from random import randrange
+from time import sleep
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Response, status
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+
+import psycopg2
+from psycopg2.extras import RealDictCursor  # This will return a column name as a key in a dictionary
 
 app = FastAPI()
 
@@ -17,8 +21,27 @@ class Post(BaseModel):
     title: str
     content: str
     published: bool = True
-    rating: Optional[int] = None
-    author: Optional["Author"] = None
+    # rating: Optional[int] = None
+    # author: Optional["Author"] = None
+
+
+while True:
+    try:
+        conn = psycopg2.connect(
+            host="redacted",
+            port=5432,
+            database="redacted",
+            user="redacted",
+            password="redacted",
+            cursor_factory=RealDictCursor,
+        )
+        cursor = conn.cursor()
+        print("Connected to the database")
+        break
+    except Exception as e:
+        print("Failed to connect to the database")
+        print("Error: ", e)
+        sleep(5)
 
 
 class PostBase(BaseModel):
