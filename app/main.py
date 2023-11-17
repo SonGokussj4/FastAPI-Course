@@ -110,10 +110,16 @@ def create_posts(post: Post):
 
 @app.get("/posts/{id}")
 def get_post(id: int, response: Response):
-    post = find_post(id)
-    if post:
-        return {"data": post}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id: {id} was not found")
+    cursor.execute("""SELECT * from posts WHERE id = %s""", (id,))
+    post = cursor.fetchone()
+
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id: {id} was not found",
+        )
+
+    return {"data": post}
 
 
 @app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
