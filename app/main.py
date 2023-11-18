@@ -124,14 +124,21 @@ def get_post(id: int, response: Response):
 
 @app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
 def update_put_post(id: int, post: PostPut):
-    post_dict = post.model_dump()
-    post_dict["id"] = id
+    cursor.execute(
+        """UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",
+        (post.title, post.content, post.published, id),
+    )
 
-    for i, p in enumerate(my_posts):
-        if p["id"] == id:
-            my_posts[i] = post_dict
-            return {"data": post_dict}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id: {id} was not found")
+    updated_post = cursor.fetchone()
+
+    if not updated_post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id: {id} was not found",
+        )
+
+    conn.commit()
+    return {"data": updated_post}
 
 
 @app.patch("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
