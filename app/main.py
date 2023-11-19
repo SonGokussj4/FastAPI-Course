@@ -177,16 +177,19 @@ def update_patch_post(id: int, post: PostPatch):
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    # post = find_post(id)
-    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (id,))
-    deleted_post = cursor.fetchone()
+def delete_post(id: int, db: Session = Depends(get_db)):
+    # cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING *""", (id,))
+    # deleted_post = cursor.fetchone()
 
-    if not deleted_post:
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+
+    if not post_query.first():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id: {id} was not found",
         )
 
-    conn.commit()
+    post_query.delete(synchronize_session=False)
+    db.commit()
+    # conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
