@@ -39,22 +39,9 @@ my_posts: list[dict] = [
 ]
 
 
-def find_post(id):
-    for post in my_posts:
-        if post["id"] == id:
-            return post
-    return None
-
-
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-
-@app.get("/sqlalchemy")
-def get_sqlalchemy_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    return {"data": posts}
 
 
 @app.get("/posts")
@@ -66,7 +53,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post, db: Session = Depends(get_db)):
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     """INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
     #     (post.title, post.content, post.published),
@@ -98,7 +85,7 @@ def get_post(id: int, response: Response, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
-def update_put_post(id: int, updated_post: schemas.PostPut, db: Session = Depends(get_db)):
+def update_put_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     """UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",
     #     (post.title, post.content, post.published, id),
@@ -123,7 +110,7 @@ def update_put_post(id: int, updated_post: schemas.PostPut, db: Session = Depend
 
 
 @app.patch("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
-def update_patch_post(id: int, post: schemas.PostPatch):
+def update_patch_post(id: int, post: schemas.PostCreate):
     # Official FastAPi solution
     stored_item_data = my_posts[id]
     if stored_item_data is None:
@@ -132,7 +119,7 @@ def update_patch_post(id: int, post: schemas.PostPatch):
             detail=f"Post with id: {id} was not found",
         )
 
-    stored_item_model = schemas.PostPatch(**stored_item_data)
+    stored_item_model = schemas.PostCreate(**stored_item_data)
     update_data = post.model_dump(exclude_unset=True)
     updated_item = stored_item_model.model_copy(update=update_data)
     my_posts[id] = jsonable_encoder(updated_item)
