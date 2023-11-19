@@ -55,8 +55,8 @@ class PostBase(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     published: Optional[bool] = None
-    rating: Optional[int] = None
-    author: Optional["Author"] = None
+    # rating: Optional[int] = None
+    # author: Optional["Author"] = None
 
 
 class PostPatch(PostBase):
@@ -144,22 +144,28 @@ def get_post(id: int, response: Response, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
-def update_put_post(id: int, post: PostPut):
-    cursor.execute(
-        """UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",
-        (post.title, post.content, post.published, id),
-    )
+def update_put_post(id: int, updated_post: PostPut, db: Session = Depends(get_db)):
+    # cursor.execute(
+    #     """UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",
+    #     (post.title, post.content, post.published, id),
+    # )
 
-    updated_post = cursor.fetchone()
+    # updated_post = cursor.fetchone()
 
-    if not updated_post:
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    post = post_query.first()
+
+    if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id: {id} was not found",
         )
 
-    conn.commit()
-    return {"data": updated_post}
+    post_query.update(updated_post.model_dump(), synchronize_session=False)
+    db.commit()
+
+    # conn.commit()
+    return {"data": post_query.first()}
 
 
 @app.patch("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
@@ -167,7 +173,10 @@ def update_patch_post(id: int, post: PostPatch):
     # Official FastAPi solution
     stored_item_data = my_posts[id]
     if stored_item_data is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id: {id} was not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id: {id} was not found",
+        )
 
     stored_item_model = PostPatch(**stored_item_data)
     update_data = post.model_dump(exclude_unset=True)
