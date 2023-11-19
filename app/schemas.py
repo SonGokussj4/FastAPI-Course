@@ -1,6 +1,7 @@
 from typing import Optional
 
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class PostBase(BaseModel):
@@ -27,3 +28,14 @@ class PostPut(PostBase):
                 # "author": {"name": "author1", "email": "author@gmail.com"},
             }
         }
+
+
+# ==============
+# Response Model
+# ==============
+class Post(PostBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

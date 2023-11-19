@@ -39,23 +39,14 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=list[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
-    new_post = models.Post(**post.model_dump())  # Create a new post
-    db.add(new_post)  # Add it to the database
-    db.commit()  # Commit the changes to the database
-    db.refresh(new_post)  # "Retrieve" the post from the db and store it in the var
-    return new_post
-
-
-@app.get("/posts/{id}")
-def get_post(id: int, response: Response, db: Session = Depends(get_db)):
+@app.get("/posts/{id}", response_model=schemas.Post)
+def get_post(id: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
         raise HTTPException(
@@ -65,8 +56,17 @@ def get_post(id: int, response: Response, db: Session = Depends(get_db)):
     return post
 
 
-@app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
-def update_put_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
+def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
+    new_post = models.Post(**post.model_dump())  # Create a new post
+    db.add(new_post)  # Add it to the database
+    db.commit()  # Commit the changes to the database
+    db.refresh(new_post)  # "Retrieve" the post from the db and store it in the var
+    return new_post
+
+
+@app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.Post)
+def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
     if not post:
