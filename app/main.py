@@ -2,12 +2,19 @@ from random import randrange
 from time import sleep
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Response, status
-from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel
-
 import psycopg2
-from psycopg2.extras import RealDictCursor  # This will return a column name as a key in a dictionary
+from fastapi import Depends, FastAPI, HTTPException, Response, status
+from fastapi.encoders import jsonable_encoder
+
+# This will return a column name as a key in a dictionary
+from psycopg2.extras import RealDictCursor
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from . import models
+from .database import engine, get_db
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -88,6 +95,12 @@ def find_post(id):
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.get("/sqlalchemy")
+def get_sqlalchemy_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return {"data": posts}
 
 
 @app.get("/posts")
