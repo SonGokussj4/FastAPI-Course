@@ -5,16 +5,19 @@ from .. import models, schemas
 from ..database import get_db
 
 # @app.get --> @router.get
-router = APIRouter()
+router = APIRouter(
+    prefix="/posts",
+    tags=["posts"],
+)
 
 
-@router.get("/posts", response_model=list[schemas.Post])
+@router.get("/", response_model=list[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
 
 
-@router.get("/posts/{id}", response_model=schemas.Post)
+@router.get("/{id}", response_model=schemas.Post)
 def get_post(id: int, db: Session = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
@@ -25,7 +28,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
     return post
 
 
-@router.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     new_post = models.Post(**post.model_dump())  # Create a new post
     db.add(new_post)  # Add it to the database
@@ -34,7 +37,7 @@ def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db)):
     return new_post
 
 
-@router.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.Post)
+@router.put("/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.Post)
 def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
@@ -48,7 +51,7 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
     return post_query.first()
 
 
-# @router.patch("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
+# @router.patch("/{id}", status_code=status.HTTP_202_ACCEPTED)
 # def update_patch_post(id: int, post: schemas.PostCreate):
 #     # Official FastAPi solution
 #     stored_item_data = my_posts[id]
@@ -65,7 +68,7 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
 #     return updated_item
 
 
-@router.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     if not post_query.first():
