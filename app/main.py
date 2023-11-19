@@ -1,35 +1,17 @@
-from random import randrange
 from time import sleep
-from typing import Optional
 
 import psycopg2
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.encoders import jsonable_encoder
-
-# This will return a column name as a key in a dictionary
-from psycopg2.extras import RealDictCursor
-from pydantic import BaseModel
+from psycopg2.extras import RealDictCursor  # Return a col_name as a key in a dict
 from sqlalchemy.orm import Session
 
-from . import models
+from . import models, schemas
 from .database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-
-class Author(BaseModel):
-    name: str
-    email: Optional[str] = None
-
-
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-    # rating: Optional[int] = None
-    # author: Optional["Author"] = None
 
 
 while True:
@@ -49,34 +31,6 @@ while True:
         print("Failed to connect to the database")
         print("Error: ", e)
         sleep(5)
-
-
-class PostBase(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    published: Optional[bool] = None
-    # rating: Optional[int] = None
-    # author: Optional["Author"] = None
-
-
-class PostPatch(PostBase):
-    ...
-
-
-class PostPut(PostBase):
-    title: str
-    content: str
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "title": "title1",
-                "content": "content1",
-                "published": True,
-                "rating": 5,
-                "author": {"name": "author1", "email": "author@gmail.com"},
-            }
-        }
 
 
 my_posts: list[dict] = [
@@ -144,7 +98,7 @@ def get_post(id: int, response: Response, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
-def update_put_post(id: int, updated_post: PostPut, db: Session = Depends(get_db)):
+def update_put_post(id: int, updated_post: schemas.PostPut, db: Session = Depends(get_db)):
     # cursor.execute(
     #     """UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""",
     #     (post.title, post.content, post.published, id),
@@ -169,7 +123,7 @@ def update_put_post(id: int, updated_post: PostPut, db: Session = Depends(get_db
 
 
 @app.patch("/posts/{id}", status_code=status.HTTP_202_ACCEPTED)
-def update_patch_post(id: int, post: PostPatch):
+def update_patch_post(id: int, post: schemas.PostPatch):
     # Official FastAPi solution
     stored_item_data = my_posts[id]
     if stored_item_data is None:
@@ -178,7 +132,7 @@ def update_patch_post(id: int, post: PostPatch):
             detail=f"Post with id: {id} was not found",
         )
 
-    stored_item_model = PostPatch(**stored_item_data)
+    stored_item_model = schemas.PostPatch(**stored_item_data)
     update_data = post.model_dump(exclude_unset=True)
     updated_item = stored_item_model.model_copy(update=update_data)
     my_posts[id] = jsonable_encoder(updated_item)
