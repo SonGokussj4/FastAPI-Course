@@ -1,0 +1,14 @@
+# Run pip-compile '.\requirements.in' to generate requirements.txt
+
+# Base
+psycopg2
+fastapi
+uvicorn
+sqlalchemy[mypy]==1.4.29
+passlib[bcrypt]
+python-jose[cryptography]
+
+# Type checking
+types-psycopg2
+types-passlib
+types-python-jose
