@@ -22,3 +22,26 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+### For reference ###
+# import psycopg2
+# from psycopg2.extras import RealDictCursor  # Return a col_name as a key in a dict
+# from time import sleep
+# while True:
+#     try:
+#         conn = psycopg2.connect(
+#             host="130.61.176.96",
+#             port=5432,
+#             database="fastapidb",
+#             user="postgres",
+#             password="matrix",
+#             cursor_factory=RealDictCursor,
+#         )
+#         cursor = conn.cursor()
+#         print("Connected to the database")
+#         break
+#     except Exception as e:
+#         print("Failed to connect to the database")
+#         print("Error: ", e)
+#         sleep(5)
